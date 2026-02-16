@@ -1551,6 +1551,15 @@ extension TerminalController {
             guard let currentIndex = tabGroup.windows.firstIndex(of: window) else { return false }
             return tabGroup.windows.enumerated().contains { $0.offset > currentIndex }
             
+        case NSSelectorFromString("moveTabToNewWindow:"):
+            guard let window else { return false }
+            return (window.tabbedWindows?.count ?? 0) > 1
+
+        case NSSelectorFromString("mergeAllWindows:"):
+            let terminalWindows = NSApp.windows.filter { $0 is TerminalWindow && $0.isVisible }
+            let tabGroups = Set(terminalWindows.compactMap { $0.tabGroup })
+            return tabGroups.count > 1
+
         case #selector(returnToDefaultSize):
             guard let window else { return false }
             

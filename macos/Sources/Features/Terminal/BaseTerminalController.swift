@@ -608,10 +608,30 @@ class BaseTerminalController: NSWindowController,
     }
 
     /// Broadcast text to all surfaces except the focused one.
+    /// Used for composed text (IME input) and insertText, which are paste-like.
     func broadcastText(_ text: String) {
         guard isBroadcasting else { return }
         for surface in surfaceTree where surface != focusedSurface {
             surface.surfaceModel?.sendText(text)
+        }
+    }
+
+    /// Broadcast a raw key event to all surfaces except the focused one.
+    /// This sends through ghostty_surface_key so control characters (backspace, enter, etc.)
+    /// are properly encoded, unlike sendText which is paste-like.
+    func broadcastKeyEvent(_ keyEvent: ghostty_input_key_s, text: String?) {
+        guard isBroadcasting else { return }
+        for surface in surfaceTree where surface != focusedSurface {
+            guard let handle = surface.surface else { continue }
+            if let text = text {
+                text.withCString { ptr in
+                    var ev = keyEvent
+                    ev.text = ptr
+                    ghostty_surface_key(handle, ev)
+                }
+            } else {
+                ghostty_surface_key(handle, keyEvent)
+            }
         }
     }
 

@@ -139,6 +139,14 @@ class TitlebarTabsVenturaTerminalWindow: TerminalWindow {
         }
     }
 
+    override func moveTabToNewWindow(_ sender: Any?) {
+        super.moveTabToNewWindow(sender)
+
+        if let controller = self.windowController as? TerminalController {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { controller.relabelTabs() }
+        }
+    }
+
     // MARK: Appearance
 
     override func syncAppearance(_ surfaceConfig: Ghostty.SurfaceView.DerivedConfig) {

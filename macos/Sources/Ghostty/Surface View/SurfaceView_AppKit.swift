@@ -1153,15 +1153,23 @@ extension Ghostty {
                     composing: markedText.length > 0 || markedTextBefore
                 )
 
-                // Broadcast printable key text to sibling surfaces.
-                // Only broadcast printable characters (0x20-0x7E for ASCII,
-                // 0x80+ for UTF-8 multibyte). Control characters and DEL
-                // go through ghostty_surface_key which encodes them differently.
-                if let text = translationEvent.ghosttyCharacters, text.count > 0,
-                   let first = text.utf8.first, first >= 0x20, first != 0x7F,
-                   markedText.length == 0, !markedTextBefore {
+                // Broadcast the key event to sibling surfaces.
+                // We use ghostty_surface_key (not sendText) so that control
+                // characters like backspace and enter are properly encoded.
+                if markedText.length == 0, !markedTextBefore {
                     if let controller = self.window?.windowController as? BaseTerminalController {
-                        controller.broadcastText(text)
+                        let keyEv = event.ghosttyKeyEvent(action, translationMods: translationEvent.modifierFlags)
+                        // Don't broadcast keys that trigger Ghostty bindings
+                        // (split management, new tab, etc.)
+                        if self.surfaceModel?.keyIsBinding(keyEv) == nil {
+                            let text = translationEvent.ghosttyCharacters
+                            if let text, text.count > 0,
+                               let codepoint = text.utf8.first, codepoint >= 0x20 {
+                                controller.broadcastKeyEvent(keyEv, text: text)
+                            } else {
+                                controller.broadcastKeyEvent(keyEv, text: nil)
+                            }
+                        }
                     }
                 }
             }

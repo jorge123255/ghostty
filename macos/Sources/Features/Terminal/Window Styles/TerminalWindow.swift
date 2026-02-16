@@ -217,6 +217,16 @@ class TerminalWindow: NSWindow {
         }
     }
 
+    override func moveTabToNewWindow(_ sender: Any?) {
+        super.moveTabToNewWindow(sender)
+
+        // It takes an event loop cycle to move the tab so we set a
+        // short timer to relabel the tabs in the source window.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.terminalController?.relabelTabs()
+        }
+    }
+
     override func addTitlebarAccessoryViewController(_ childViewController: NSTitlebarAccessoryViewController) {
         super.addTitlebarAccessoryViewController(childViewController)
 
