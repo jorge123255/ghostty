@@ -75,7 +75,16 @@ extension NSPasteboard {
                     pngData = data
                 }
 
-                let tempDir = FileManager.default.temporaryDirectory
+                let fm = FileManager.default
+                let tempDir = fm.temporaryDirectory
+
+                // Clean up previous ghostty-paste files
+                if let contents = try? fm.contentsOfDirectory(atPath: tempDir.path) {
+                    for file in contents where file.hasPrefix("ghostty-paste-") {
+                        try? fm.removeItem(at: tempDir.appendingPathComponent(file))
+                    }
+                }
+
                 let filename = "ghostty-paste-\(UUID().uuidString).png"
                 let fileURL = tempDir.appendingPathComponent(filename)
 
