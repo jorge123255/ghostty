@@ -422,6 +422,9 @@ extension Notification.Name {
 
     /// Focus the search field
     static let ghosttySearchFocus = Notification.Name("com.mitchellh.ghostty.searchFocus")
+
+    /// Image was pasted from clipboard as a temp file
+    static let ghosttyImageDidPaste = Notification.Name("com.mitchellh.ghostty.imageDidPaste")
 }
 
 // NOTE: I am moving all of these to Notification.Name extensions over time. This

@@ -52,6 +52,11 @@ class BaseTerminalController: NSWindowController,
     /// Set if the terminal view should show the update overlay.
     @Published var updateOverlayIsVisible: Bool = false
 
+    /// Toast notification state.
+    @Published var toastMessage: String? = nil
+    @Published var toastIcon: String = "info.circle"
+    private var toastDismissTask: Task<Void, Never>?
+
     /// Whether the terminal surface should focus when the mouse is over it.
     var focusFollowsMouse: Bool {
         self.derivedConfig.focusFollowsMouse
@@ -162,6 +167,11 @@ class BaseTerminalController: NSWindowController,
             self,
             selector: #selector(ghosttyMaximizeDidToggle(_:)),
             name: .ghosttyMaximizeDidToggle,
+            object: nil)
+        center.addObserver(
+            self,
+            selector: #selector(ghosttyImageDidPaste(_:)),
+            name: .ghosttyImageDidPaste,
             object: nil)
 
         // Splits
@@ -573,6 +583,25 @@ class BaseTerminalController: NSWindowController,
         guard let surfaceView = notification.object as? Ghostty.SurfaceView else { return }
         guard surfaceTree.contains(surfaceView) else { return }
         window.zoom(nil)
+    }
+
+    @objc private func ghosttyImageDidPaste(_ notification: Notification) {
+        showToast("Image saved from clipboard", icon: "photo")
+    }
+
+    func showToast(_ message: String, icon: String = "info.circle", duration: TimeInterval = 2.0) {
+        toastDismissTask?.cancel()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            toastMessage = message
+            toastIcon = icon
+        }
+        toastDismissTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.3)) {
+                self?.toastMessage = nil
+            }
+        }
     }
 
     @objc private func ghosttyDidCloseSurface(_ notification: Notification) {
