@@ -39,6 +39,9 @@ protocol TerminalViewModel: ObservableObject {
     /// Toast notification state.
     var toastMessage: String? { get }
     var toastIcon: String { get }
+
+    /// Whether input broadcasting is active.
+    var isBroadcasting: Bool { get }
 }
 
 /// The main terminal view. This terminal view supports splits.
@@ -126,6 +129,9 @@ struct TerminalView<ViewModel: TerminalViewModel>: View {
                     UpdateOverlay()
                 }
 
+                // Broadcast indicator border
+                BroadcastBorderOverlay(broadcasting: viewModel.isBroadcasting)
+
                 // Toast notification overlay
                 if let message = viewModel.toastMessage {
                     ToastView(message: message, icon: viewModel.toastIcon)
@@ -150,6 +156,22 @@ fileprivate struct UpdateOverlay: View {
                 }
             }
         }
+    }
+}
+
+/// A subtle border overlay indicating that input broadcasting is active.
+fileprivate struct BroadcastBorderOverlay: View {
+    let broadcasting: Bool
+
+    var body: some View {
+        Rectangle()
+            .strokeBorder(
+                Color.orange.opacity(0.6),
+                lineWidth: 2
+            )
+            .allowsHitTesting(false)
+            .opacity(broadcasting ? 1.0 : 0.0)
+            .animation(.easeInOut(duration: 0.3), value: broadcasting)
     }
 }
 

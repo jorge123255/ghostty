@@ -1153,8 +1153,12 @@ extension Ghostty {
                     composing: markedText.length > 0 || markedTextBefore
                 )
 
-                // Broadcast the key text to sibling surfaces
+                // Broadcast printable key text to sibling surfaces.
+                // Only broadcast if the first byte is printable (>= 0x20).
+                // Control characters (delete, enter, arrows) go through
+                // ghostty_surface_key which encodes them differently.
                 if let text = translationEvent.ghosttyCharacters, text.count > 0,
+                   let first = text.utf8.first, first >= 0x20,
                    markedText.length == 0, !markedTextBefore {
                     if let controller = self.window?.windowController as? BaseTerminalController {
                         controller.broadcastText(text)
