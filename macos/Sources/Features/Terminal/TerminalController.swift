@@ -212,6 +212,11 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
     // by something like an App Intent) then we prefer the most previous main.
     static private(set) weak var lastMain: TerminalController? = nil
 
+    // Track the previously active window for "switch to last active tab".
+    // When a new window/tab becomes key, the old one is saved here.
+    static private weak var lastActiveWindow: NSWindow? = nil
+    static private weak var currentActiveWindow: NSWindow? = nil
+
     /// The "new window" action.
     static func newWindow(
         _ ghostty: Ghostty.App,
@@ -1150,6 +1155,12 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
     }
 
     override func windowDidBecomeKey(_ notification: Notification) {
+        // Track last active window for "switch to last active tab"
+        if self.window !== Self.currentActiveWindow {
+            Self.lastActiveWindow = Self.currentActiveWindow
+            Self.currentActiveWindow = self.window
+        }
+
         super.windowDidBecomeKey(notification)
         self.relabelTabs()
         self.fixTabBar()
@@ -1484,6 +1495,12 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
         closeTabsOnTheRight(self)
     }
 
+    /// Switch to the last active tab/window (MRU toggle).
+    @IBAction func switchToLastActiveTab(_ sender: Any?) {
+        guard let lastWindow = Self.lastActiveWindow, lastWindow !== self.window else { return }
+        lastWindow.makeKeyAndOrderFront(nil)
+    }
+
     @objc private func onCloseWindow(notification: SwiftUI.Notification) {
         guard let target = notification.object as? Ghostty.SurfaceView else { return }
         guard surfaceTree.contains(target) else { return }
@@ -1559,6 +1576,10 @@ extension TerminalController {
             let terminalWindows = NSApp.windows.filter { $0 is TerminalWindow && $0.isVisible }
             let tabGroups = Set(terminalWindows.compactMap { $0.tabGroup })
             return tabGroups.count > 1
+
+        case #selector(switchToLastActiveTab(_:)):
+            guard let lastWindow = Self.lastActiveWindow else { return false }
+            return lastWindow !== self.window && lastWindow.isVisible
 
         case #selector(returnToDefaultSize):
             guard let window else { return false }

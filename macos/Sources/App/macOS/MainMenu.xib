@@ -522,6 +522,12 @@
                                     <action selector="mergeAllWindows:" target="-1" id="qF8-rM-3Ka"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Switch to Last Active Tab" id="bT9-xK-5Wm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="switchToLastActiveTab:" target="-1" id="hL4-pR-7Nc"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
