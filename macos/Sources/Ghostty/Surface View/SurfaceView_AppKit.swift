@@ -1129,6 +1129,13 @@ extension Ghostty {
                         text: text
                     )
                 }
+
+                // Broadcast accumulated text to sibling surfaces
+                if let controller = self.window?.windowController as? BaseTerminalController {
+                    for text in list {
+                        controller.broadcastText(text)
+                    }
+                }
             } else {
                 // We have no accumulated text so this is a normal key event.
                 _ = keyAction(
@@ -1145,6 +1152,14 @@ extension Ghostty {
                     // the prior input characters (prior to the composing).
                     composing: markedText.length > 0 || markedTextBefore
                 )
+
+                // Broadcast the key text to sibling surfaces
+                if let text = translationEvent.ghosttyCharacters, text.count > 0,
+                   markedText.length == 0, !markedTextBefore {
+                    if let controller = self.window?.windowController as? BaseTerminalController {
+                        controller.broadcastText(text)
+                    }
+                }
             }
         }
 
@@ -1470,6 +1485,9 @@ extension Ghostty {
             item = menu.addItem(withTitle: "Terminal Read-only", action: #selector(toggleReadonly(_:)), keyEquivalent: "")
             item.setImageIfDesired(systemSymbolName: "eye.fill")
             item.state = readonly ? .on : .off
+            item = menu.addItem(withTitle: "Broadcast Input", action: #selector(toggleBroadcasting(_:)), keyEquivalent: "")
+            item.setImageIfDesired(systemSymbolName: "antenna.radiowaves.left.and.right")
+            item.state = (self.window?.windowController as? BaseTerminalController)?.isBroadcasting == true ? .on : .off
             menu.addItem(.separator())
             item = menu.addItem(withTitle: "Change Tab Title...", action: #selector(BaseTerminalController.changeTabTitle(_:)), keyEquivalent: "")
             item.setImageIfDesired(systemSymbolName: "pencil.line")
@@ -1575,6 +1593,14 @@ extension Ghostty {
             if (!ghostty_surface_binding_action(surface, action, UInt(action.lengthOfBytes(using: .utf8)))) {
                 AppDelegate.logger.warning("action failed action=\(action)")
             }
+        }
+
+        @objc func toggleBroadcasting(_ sender: Any) {
+            guard let controller = self.window?.windowController as? BaseTerminalController else { return }
+            controller.isBroadcasting.toggle()
+            controller.showToast(
+                controller.isBroadcasting ? "Broadcasting input" : "Broadcasting off",
+                icon: "antenna.radiowaves.left.and.right")
         }
 
         /// Triggers a brief highlight animation on this surface.
@@ -1934,6 +1960,11 @@ extension Ghostty.SurfaceView: NSTextInputClient {
         }
 
         surfaceModel.sendText(chars)
+
+        // Broadcast to sibling surfaces if enabled
+        if let controller = self.window?.windowController as? BaseTerminalController {
+            controller.broadcastText(chars)
+        }
     }
 
     /// This function needs to exist for two reasons:

@@ -57,6 +57,9 @@ class BaseTerminalController: NSWindowController,
     @Published var toastIcon: String = "info.circle"
     private var toastDismissTask: Task<Void, Never>?
 
+    /// Whether input broadcasting to all splits is enabled.
+    @Published var isBroadcasting: Bool = false
+
     /// Whether the terminal surface should focus when the mouse is over it.
     var focusFollowsMouse: Bool {
         self.derivedConfig.focusFollowsMouse
@@ -601,6 +604,14 @@ class BaseTerminalController: NSWindowController,
             withAnimation(.easeOut(duration: 0.3)) {
                 self?.toastMessage = nil
             }
+        }
+    }
+
+    /// Broadcast text to all surfaces except the focused one.
+    func broadcastText(_ text: String) {
+        guard isBroadcasting else { return }
+        for surface in surfaceTree where surface != focusedSurface {
+            surface.surfaceModel?.sendText(text)
         }
     }
 
