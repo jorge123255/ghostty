@@ -35,6 +35,10 @@ protocol TerminalViewModel: ObservableObject {
     
     /// The update overlay should be visible.
     var updateOverlayIsVisible: Bool { get }
+
+    /// Toast notification state.
+    var toastMessage: String? { get }
+    var toastIcon: String { get }
 }
 
 /// The main terminal view. This terminal view supports splits.
@@ -120,6 +124,11 @@ struct TerminalView<ViewModel: TerminalViewModel>: View {
                 // Show update information above all else.
                 if viewModel.updateOverlayIsVisible {
                     UpdateOverlay()
+                }
+
+                // Toast notification overlay
+                if let message = viewModel.toastMessage {
+                    ToastView(message: message, icon: viewModel.toastIcon)
                 }
             }
             .frame(maxWidth: .greatestFiniteMagnitude, maxHeight: .greatestFiniteMagnitude)

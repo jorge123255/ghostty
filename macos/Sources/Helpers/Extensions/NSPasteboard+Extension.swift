@@ -81,6 +81,7 @@ extension NSPasteboard {
 
                 do {
                     try pngData.write(to: fileURL)
+                    NotificationCenter.default.post(name: .ghosttyImageDidPaste, object: nil)
                     return Ghostty.Shell.escape(fileURL.path)
                 } catch {
                     continue
